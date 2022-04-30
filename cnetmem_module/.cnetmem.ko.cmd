@@ -1,0 +1,1 @@
+cmd_/users/jbae91/CNetMem/cnetmem_module/cnetmem.ko := ld -r -m elf_x86_64 -T /usr/src/linux-headers-3.13.0-168-generic/scripts/module-common.lds --build-id  -o /users/jbae91/CNetMem/cnetmem_module/cnetmem.ko /users/jbae91/CNetMem/cnetmem_module/cnetmem.o /users/jbae91/CNetMem/cnetmem_module/cnetmem.mod.o
