@@ -1,6 +1,5 @@
 /*
- * cnetmem, remote memory paging over RDMA
- * Copyright 2017 University of Michigan, Ann Arbor
+ * cnetmem,
  *  
  * Copyright (c) 2013 Mellanox Technologies��. All rights reserved.
  *

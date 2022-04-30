@@ -1,5 +1,5 @@
 /*
- * cnetmem, remote memory paging over RDMA
+ * cnetmem
  *  
  * Stackbd
  * Copyright 2014 Oren Kishon
@@ -49,7 +49,6 @@
 #include "rdmabox.h"
 #include "diskbox.h"
 #include "cnetmem_mempool.h"
-//#include "zrambox.h"
 #include <linux/smp.h>
 
 /*
@@ -68,8 +67,8 @@ struct bio_set *io_bio_set;
 #define PFX     DRV_NAME ": "
 #define DRV_VERSION "0.0"
 
-MODULE_AUTHOR("Juncheng Gu, Youngmoon Lee, from Sagi Grimberg, Max Gurtovoy");
-MODULE_DESCRIPTION("rdmabox, remote memory paging over RDMA");
+MODULE_AUTHOR("Juhyun Bae");
+MODULE_DESCRIPTION("CNetMem");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_VERSION(DRV_VERSION);
 
@@ -80,13 +79,7 @@ int RDMABOX_major;
 struct list_head g_RDMABOX_sessions;
 struct mutex g_lock;
 int submit_queues; // num of available cpu (also connections)
-/*
-static void msg_reset(struct rdmabox_msg *msg)
-{
-  memset(&msg->data_tbl, 0, sizeof(msg->data_tbl));
-  atomic_set(&msg->ref_count,0);
-}
-*/
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
 static struct blk_mq_hw_ctx *RDMABOX_alloc_hctx(struct blk_mq_reg *reg,
     unsigned int hctx_index)
@@ -147,31 +140,8 @@ static int RDMABOX_request(struct request *req, struct RDMABOX_queue *xq)
 #if defined(SUPPORT_HYBRID_WRITE_SINGLE)
   unsigned int nr_seg = req->nr_phys_segments;
 #endif
-  //unsigned char char_cpu;
-  //unsigned char delay;
-  //size_t index;
-  //struct rdma_ctx *ctx[NUM_REPLICA];
-  //struct kernel_cb *replica_cb_list[NUM_REPLICA];
-  //int swapspace_index;
-  //unsigned long start_tmp, start_idx_tmp;  
-  //struct timeval start, end;
-  //unsigned long diff;
-  //do_gettimeofday(&start);
-
   struct RDMABOX_session *RDMABOX_sess = xq->RDMABOX_sess;
-  //struct RDMABOX_session *RDMABOX_sess = xq->RDMABOX_conn->RDMABOX_sess;
-  //index = blk_rq_pos(req) >> SECTORS_PER_PAGE_SHIFT;
-  //flags = zram_get_flag(index);
 
-  //start_idx_tmp = blk_rq_pos(tmp) >> SECTORS_PER_PAGE_SHIFT; // 3
-  //start_tmp = start_idx_tmp << PAGE_SHIFT;
-  //swapspace_index = start_tmp >> ONE_GB_SHIFT;
-
-/*
-  struct rdmabox_msg *msg = req->special;
-  msg_reset(msg);
-  msg->req = req;
-*/
   switch (rq_data_dir(req)) {
     case READ:
 #if defined(USE_SGE_READ) || defined(USE_SINGLE_IO_PRE_MR_READ)
@@ -281,22 +251,13 @@ retry_read:
 #elif defined(SUPPORT_HYBRID_WRITE)
 retry_write:
       cpu = get_cpu();
-/*
-      err = pre_check_write(RDMABOX_sess, req, cpu);
-      if(err){
-         return 0;
-      }
-*/
+
       err = put_req_item(req);
       if(err){
          printk("cnetmem_drv: retry put write req \n");
          goto retry_write;
       }
-      //prepare_write(req, cpu)
-      //get_random_bytes(&char_cpu, sizeof(char_cpu));
-      //char_cpu%=submit_queues;
-      //hybrid_batch_write_fn(RDMABOX_sess, char_cpu);
-      //udelay(1);
+
       hybrid_batch_write_fn(RDMABOX_sess, cpu);
       put_cpu();
 #elif defined(USE_DOORBELL_WRITE) || defined(USE_DOORBELL_WRITE_SGE)
@@ -330,22 +291,12 @@ retry_write:
 #else //BATCH
 retry_write:
       cpu = get_cpu();
-/*
-      err = pre_check_write(RDMABOX_sess, req, cpu);
-      if(err){
-         return 0;
-      }
-*/
+
       err = put_req_item(req);
       if(err){
          printk("cnetmem_drv: retry put write req \n");
          goto retry_write;
       }
-      //prepare_write(req, cpu)
-      //get_random_bytes(&char_cpu, sizeof(char_cpu));
-      //char_cpu%=submit_queues;
-      //batch_write_fn(RDMABOX_sess, char_cpu);
-      //udelay(1);
       batch_write_fn(RDMABOX_sess, cpu);
       put_cpu();
 #endif
@@ -391,7 +342,7 @@ static int RDMABOX_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *rq)
 #endif
 }
 
-// connect hctx with IS-file, IS-conn, and queue
+// connect hctx with file, conn, and queue
 static int RDMABOX_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
     unsigned int index)
 {
@@ -478,14 +429,13 @@ static int RDMABOX_ioctl(struct block_device *bd, fmode_t mode,
   return -ENOTTY;
 }
 
-// bind to RDMABOX_file in RDMABOX_register_block_device
 static struct block_device_operations RDMABOX_ops = {
   .owner           = THIS_MODULE,
-  .open 	         = RDMABOX_open,
-  .release 	 = RDMABOX_release,
+  .open 	   = RDMABOX_open,
+  .release 	   = RDMABOX_release,
   .media_changed   = RDMABOX_media_changed,
   .revalidate_disk = RDMABOX_revalidate,
-  .ioctl	         = RDMABOX_ioctl
+  .ioctl	   = RDMABOX_ioctl
 };
 
 void RDMABOX_destroy_queues(struct RDMABOX_file *xdev)
@@ -497,7 +447,6 @@ void RDMABOX_destroy_queues(struct RDMABOX_file *xdev)
 
 int RDMABOX_register_block_device(struct RDMABOX_file *RDMABOX_file)
 {
-  //sector_t size = RDMABOX_file->stbuf.st_size;
   u64 size = RDMABOX_file->stbuf.st_size;
   int page_size = PAGE_SIZE;
   int err = 0;
@@ -512,14 +461,11 @@ int RDMABOX_register_block_device(struct RDMABOX_file *RDMABOX_file)
   if (err)
     goto out;
 
-  // init zram
-  //err = zram_init(size);
   err = brd_init(size);
   if (err)
     goto out;
  
 #ifdef DISKBACKUP
-  // register stackbd
   err = register_stackbd_device(major_num);
   if (err)
     goto out;

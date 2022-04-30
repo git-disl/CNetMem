@@ -1,5 +1,5 @@
 /*
- * rdmabox, remote memory paging over RDMA
+ * cnetmem
  *
  * Copyright (c) 2013 Mellanox Technologies��. All rights reserved.
  *
