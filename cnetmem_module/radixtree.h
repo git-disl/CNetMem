@@ -1,4 +1,8 @@
-
+/*
+ * CNetMem
+ * Copyright (c) 2021 Georgia Institute of Technology
+ *
+ */
 #ifndef RADIXTREE_H
 #define RADIXTREE_H
 

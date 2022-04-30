@@ -1,5 +1,6 @@
 /*
- * cnetmem
+ * CNetMem
+ * Copyright (c) 2021 Georgia Institute of Technology
  *
  * Copyright (c) 2013 Mellanox Technologies��. All rights reserved.
  *

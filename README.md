@@ -12,7 +12,7 @@ This repository is for Mellanox ConnectX-3 driver with kernel 3.13 for fair comp
 
 This repository will also be updated when RDMAbox Inbox Kernel 4.x version comes.
 
-![](showcase.jpg)
+![](asset/showcase.jpg)
 
 ## Installation and Dependencies for Experiments in Paper (Kernel space Remote Paging System example)
 

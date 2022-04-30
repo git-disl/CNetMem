@@ -1,2 +1,0 @@
-/users/jbae91/CNetMem/cnetmem_module/cnetmem.ko
-/users/jbae91/CNetMem/cnetmem_module/alf_queue.o /users/jbae91/CNetMem/cnetmem_module/rdmabox.o /users/jbae91/CNetMem/cnetmem_module/diskbox.o /users/jbae91/CNetMem/cnetmem_module/cnetmem_mempool.o /users/jbae91/CNetMem/cnetmem_module/radixtree.o /users/jbae91/CNetMem/cnetmem_module/cnetmem_configfs.o /users/jbae91/CNetMem/cnetmem_module/cnetmem_drv.o
